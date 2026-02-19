@@ -1,0 +1,142 @@
+"use client";
+
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { duplicateEvent, type DuplicateEventResult } from "./actions";
+import type { EventRow } from "./types";
+import { cn } from "@/lib/utils";
+
+function duplicateEventAction(
+  _prev: DuplicateEventResult | null,
+  formData: FormData
+): Promise<DuplicateEventResult> {
+  const sourceEventId = formData.get("sourceEventId") as string;
+  if (!sourceEventId) return Promise.resolve({ success: false, error: "Falta el evento de origen." });
+  return duplicateEvent(sourceEventId, formData);
+}
+
+export function DuplicateEventModal({
+  open,
+  onOpenChange,
+  sourceEvent,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  sourceEvent: EventRow | null;
+}) {
+  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(duplicateEventAction, null);
+
+  useEffect(() => {
+    if (state?.success && state.newEventId) {
+      onOpenChange(false);
+      router.refresh();
+      router.push(`/app/events/${state.newEventId}`);
+    }
+  }, [state, onOpenChange, router]);
+
+  if (!sourceEvent) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Duplicar evento</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Crear un nuevo evento a partir de {sourceEvent.program_type} {sourceEvent.code} ({sourceEvent.city}). Opcionalmente copia todos los participantes.
+          </p>
+        </DialogHeader>
+        <form action={formAction} className="space-y-4">
+          <input type="hidden" name="sourceEventId" value={sourceEvent.id} />
+          <div className="space-y-2">
+            <Label htmlFor="dup_program_type">Programa del nuevo evento</Label>
+            <select
+              id="dup_program_type"
+              name="program_type"
+              defaultValue={sourceEvent.program_type}
+              className={cn(
+                "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-xs md:text-sm",
+                "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+              )}
+            >
+              <option value="PT">PT — Poder Total</option>
+              <option value="LT">LT — Libertad Total</option>
+              <option value="TL">TL — TL</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dup_code">Número del nuevo evento</Label>
+            <Input
+              id="dup_code"
+              name="code"
+              required
+              placeholder="43"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dup_city">Ciudad</Label>
+            <select
+              id="dup_city"
+              name="city"
+              required
+              defaultValue={sourceEvent.city}
+              className={cn(
+                "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-xs md:text-sm",
+                "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
+              )}
+            >
+              <option value="Miami">Miami</option>
+              <option value="Atlanta">Atlanta</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dup_coordinator">Coordinador</Label>
+            <Input
+              id="dup_coordinator"
+              name="coordinator"
+              defaultValue={sourceEvent.coordinator ?? ""}
+              placeholder="Coordinador"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="dup_copy_participants"
+              name="copy_participants"
+              defaultChecked
+              className="h-4 w-4 rounded border border-input"
+            />
+            <Label htmlFor="dup_copy_participants" className="font-normal">
+              Copiar todos los participantes al nuevo evento
+            </Label>
+          </div>
+          {state && !state.success && (
+            <p className="text-sm text-destructive">{state.error}</p>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Duplicando…" : "Duplicar"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
