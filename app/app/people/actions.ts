@@ -88,6 +88,23 @@ type EnrollRowWithEvent = EnrollRow & {
   event?: { program_type: string; code: string; scheduled_deletion_at: string | null } | null;
 };
 
+/** Supabase returns nested FK relations as array; normalize to single object. */
+function normalizeEnrollmentRows(
+  rows: { id: string; person_id: string; city: unknown; status: unknown; attended: unknown; event?: unknown }[]
+): EnrollRowWithEvent[] {
+  return rows.map((r) => {
+    const event = Array.isArray(r.event) ? r.event[0] : r.event;
+    return {
+      id: r.id,
+      person_id: r.person_id,
+      city: r.city as string | null,
+      status: r.status as string,
+      attended: r.attended as boolean,
+      event: event as EnrollRowWithEvent["event"],
+    };
+  });
+}
+
 export async function getFilteredPeople(
   filters: PeopleFilters
 ): Promise<{ people: PersonRow[]; counts: PeopleCounts }> {
@@ -119,7 +136,7 @@ export async function getFilteredPeople(
     const { data: rows = [] } = await supabase
       .from("enrollments")
       .select("id, person_id, city, status, attended, event:events(program_type, code, scheduled_deletion_at)");
-    enrollmentRows = rows as EnrollRowWithEvent[];
+    enrollmentRows = normalizeEnrollmentRows(rows ?? []);
     enrollmentRows = enrollmentRows.filter((e) => {
       const ev = e.event;
       if (!ev || ev.scheduled_deletion_at) return false;
@@ -133,7 +150,7 @@ export async function getFilteredPeople(
     const { data: rows = [] } = await supabase
       .from("enrollments")
       .select("id, person_id, city, status, attended");
-    enrollmentRows = rows as EnrollRowWithEvent[];
+    enrollmentRows = normalizeEnrollmentRows(rows ?? []);
   }
 
   const enrollmentIds = enrollmentRows.map((r) => r.id);

@@ -5,7 +5,8 @@ import { formatCurrency, type ReportContent } from "./report-builder";
 export function buildReportPdf(content: ReportContent): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const margin = 20;
-  const pageWidth = doc.getPageWidth() - margin * 2;
+  const pageWidth = doc.internal.pageSize.getWidth() - margin * 2;
+  const pageHeight = doc.internal.pageSize.getHeight();
   let y = margin;
   const lineHeight = 6;
 
@@ -13,7 +14,7 @@ export function buildReportPdf(content: ReportContent): void {
     if (fontSize) doc.setFontSize(fontSize);
     const lines = doc.splitTextToSize(text, pageWidth);
     for (const line of lines) {
-      if (y > doc.getPageHeight() - margin - lineHeight) {
+      if (y > pageHeight - margin - lineHeight) {
         doc.addPage();
         y = margin;
       }
