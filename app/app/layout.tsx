@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { signOut } from "./actions";
 
 const navItems = [
   { href: "/app/events", label: "Entrenamientos" },
@@ -31,7 +32,11 @@ export default function AppLayout({
             </Button>
           ))}
         </nav>
-        <div />
+        <form action={signOut} className="flex justify-end pr-4">
+          <Button type="submit" variant="ghost" size="sm">
+            Cerrar sesión
+          </Button>
+        </form>
       </header>
       <main className="min-w-0 flex-1 overflow-x-hidden p-6">{children}</main>
     </div>

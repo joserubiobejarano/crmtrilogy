@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin";
 
 type LoginPageProps = {
   searchParams?: Promise<{ error?: string }>;
@@ -35,6 +36,11 @@ async function signIn(formData: FormData) {
     redirect("/login?error=invalid");
   }
 
+  if (!isAdminEmail(email)) {
+    await supabase.auth.signOut();
+    redirect("/login?error=forbidden");
+  }
+
   redirect("/app");
 }
 
@@ -43,9 +49,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const errorMessage =
     sp?.error === "missing"
       ? "Correo y contraseña son obligatorios."
-      : sp?.error
-        ? "Credenciales incorrectas."
-        : null;
+      : sp?.error === "forbidden"
+        ? "No tienes acceso a esta aplicación."
+        : sp?.error
+          ? "Credenciales incorrectas."
+          : null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
