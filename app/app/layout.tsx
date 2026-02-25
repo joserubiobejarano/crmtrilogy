@@ -7,6 +7,7 @@ const navItems = [
   { href: "/app/people", label: "Participantes" },
   { href: "/app/reports", label: "Reportes" },
   { href: "/app/historial", label: "Historial" },
+  { href: "/app/administration", label: "Administración" },
 ];
 
 export default function AppLayout({
@@ -18,7 +19,7 @@ export default function AppLayout({
     <div className="flex min-h-screen flex-col bg-background">
       <header className="grid grid-cols-3 items-center border-b px-6 py-4">
         <Link href="/app" className="ml-4 text-xl font-semibold">
-          Trilogy
+          Somos Trilogy
         </Link>
         <nav className="flex justify-center items-center gap-1">
           {navItems.map((item) => (
@@ -38,7 +39,7 @@ export default function AppLayout({
           </Button>
         </form>
       </header>
-      <main className="min-w-0 flex-1 overflow-x-hidden p-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden p-4 md:p-6">{children}</main>
     </div>
   );
 }

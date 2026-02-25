@@ -29,6 +29,7 @@ const BOOLEAN_FIELDS = [
   "tl_norms_signed",
   "tl_rules_signed",
   "finalized",
+  "withdrew",
 ] as const;
 
 const TEXT_FIELDS = ["admin_notes", "angel_name", "city", "status"] as const;
@@ -101,6 +102,7 @@ export async function getEventWithEnrollments(
       tl_rules_signed,
       cantidad,
       finalized,
+      withdrew,
       created_at,
       replaced_by_enrollment_id,
       person:people(first_name, last_name, phone, email)
@@ -190,6 +192,7 @@ export async function getEventWithEnrollments(
     tl_rules_signed: boolean | null;
     cantidad: number | null;
     finalized: boolean;
+    withdrew: boolean;
     created_at?: string;
     replaced_by_enrollment_id: string | null;
     person:
@@ -223,6 +226,7 @@ export async function getEventWithEnrollments(
       tl_norms_signed: r.tl_norms_signed,
       tl_rules_signed: r.tl_rules_signed,
       finalized: r.finalized ?? false,
+      withdrew: r.withdrew ?? false,
       cantidad:
         r.cantidad != null && String(r.cantidad).trim() !== "" && !Number.isNaN(Number(r.cantidad))
           ? Number(r.cantidad)
@@ -293,7 +297,7 @@ export async function addParticipant(
       entity_id: result.personId,
       action: "insert",
       changed_by: user?.id ?? null,
-      context: { event_id: eventId },
+      context: { event_id: eventId, actor_email: user?.email ?? null },
       changes: [],
     });
   }
@@ -302,7 +306,7 @@ export async function addParticipant(
     entity_id: result.enrollmentId,
     action: "insert",
     changed_by: user?.id ?? null,
-    context: { event_id: eventId, person_id: result.personId },
+    context: { event_id: eventId, person_id: result.personId, actor_email: user?.email ?? null },
     changes: [],
   });
 
@@ -384,7 +388,7 @@ export async function updateEnrollmentField(
     entity_id: enrollmentId,
     action: "update",
     changed_by: user?.id ?? null,
-    context: { event_id: eventId },
+    context: { event_id: eventId, actor_email: user?.email ?? null },
     changes: [{ field, old_value: oldValue, new_value: payloadValue }],
   });
 
@@ -518,7 +522,7 @@ export async function updateEnrollmentPaymentAmount(
         entity_id: existing.id,
         action: "update",
         changed_by: user?.id ?? null,
-        context: { event_id: enrollment.event_id, enrollment_id: enrollmentId },
+        context: { event_id: enrollment.event_id, enrollment_id: enrollmentId, actor_email: user?.email ?? null },
         changes: [{ field: "amount", old_value: existing.amount, new_value: amountValue }],
       });
     }
@@ -540,7 +544,7 @@ export async function updateEnrollmentPaymentAmount(
       entity_id: inserted.id,
       action: "insert",
       changed_by: user?.id ?? null,
-      context: { event_id: enrollment.event_id, enrollment_id: enrollmentId },
+      context: { event_id: enrollment.event_id, enrollment_id: enrollmentId, actor_email: user?.email ?? null },
       changes: [
         { field: "method", old_value: null, new_value: methodDb },
         { field: "amount", old_value: null, new_value: amountValue },
@@ -598,7 +602,7 @@ export async function updateEnrollmentPaymentFee(
         entity_id: feeRow.id,
         action: "update",
         changed_by: user?.id ?? null,
-        context: { event_id: enrollment.event_id, enrollment_id: enrollmentId },
+        context: { event_id: enrollment.event_id, enrollment_id: enrollmentId, actor_email: user?.email ?? null },
         changes: [{ field: "fee_amount", old_value: feeRow.fee_amount, new_value: feeValue }],
       });
     }
@@ -620,7 +624,7 @@ export async function updateEnrollmentPaymentFee(
       entity_id: inserted.id,
       action: "insert",
       changed_by: user?.id ?? null,
-      context: { event_id: enrollment.event_id, enrollment_id: enrollmentId },
+      context: { event_id: enrollment.event_id, enrollment_id: enrollmentId, actor_email: user?.email ?? null },
       changes: [{ field: "fee_amount", old_value: null, new_value: feeValue }],
     });
   }
@@ -723,7 +727,7 @@ export async function updateEnrollmentPayment(
         entity_id: existingPayment.id,
         action: "update",
         changed_by: user?.id ?? null,
-        context: { event_id: enrollment.event_id, enrollment_id: enrollmentId },
+        context: { event_id: enrollment.event_id, enrollment_id: enrollmentId, actor_email: user?.email ?? null },
         changes,
       });
     }
@@ -746,7 +750,7 @@ export async function updateEnrollmentPayment(
       entity_id: insertedPayment.id,
       action: "insert",
       changed_by: user?.id ?? null,
-      context: { event_id: enrollment.event_id, enrollment_id: enrollmentId },
+      context: { event_id: enrollment.event_id, enrollment_id: enrollmentId, actor_email: user?.email ?? null },
       changes: [
         { field: "method", old_value: null, new_value: methodDb ?? null },
         { field: "fee_amount", old_value: null, new_value: feeValue },
@@ -785,7 +789,7 @@ export async function deleteEnrollment(
     entity_id: enrollmentId,
     action: "delete",
     changed_by: user?.id ?? null,
-    context: { event_id: enrollment.event_id },
+    context: { event_id: enrollment.event_id, actor_email: user?.email ?? null },
     changes: [],
   });
 
@@ -999,6 +1003,7 @@ export async function transferEnrollmentSpot(
       event_id: eventId,
       to_enrollment_id: toEnrollment.id,
       to_person_id: targetPersonId,
+      actor_email: user?.email ?? null,
     },
     changes: [],
   });
@@ -1011,6 +1016,7 @@ export async function transferEnrollmentSpot(
       event_id: eventId,
       from_enrollment_id: fromEnrollmentId,
       from_person_id: fromEnrollment.person_id,
+      actor_email: user?.email ?? null,
     },
     changes: [],
   });
@@ -1020,7 +1026,7 @@ export async function transferEnrollmentSpot(
       entity_id: transferRow.id,
       action: "transfer",
       changed_by: user?.id ?? null,
-      context: { event_id: eventId, from_enrollment_id: fromEnrollmentId, to_enrollment_id: toEnrollment.id },
+      context: { event_id: eventId, from_enrollment_id: fromEnrollmentId, to_enrollment_id: toEnrollment.id, actor_email: user?.email ?? null },
       changes: [],
     });
   }
@@ -1159,7 +1165,7 @@ export async function transferEnrollmentSpotToExistingEnrollment(
     entity_id: fromEnrollmentId,
     action: "transfer_out",
     changed_by: user?.id ?? null,
-    context: { event_id: eventId, to_enrollment_id: toEnrollmentId, to_person_id: toEnrollment.person_id },
+    context: { event_id: eventId, to_enrollment_id: toEnrollmentId, to_person_id: toEnrollment.person_id, actor_email: user?.email ?? null },
     changes: [],
   });
   await writeAuditLog(supabase, {
@@ -1167,7 +1173,7 @@ export async function transferEnrollmentSpotToExistingEnrollment(
     entity_id: toEnrollmentId,
     action: "transfer_in",
     changed_by: user?.id ?? null,
-    context: { event_id: eventId, from_enrollment_id: fromEnrollmentId, from_person_id: fromEnrollment.person_id },
+    context: { event_id: eventId, from_enrollment_id: fromEnrollmentId, from_person_id: fromEnrollment.person_id, actor_email: user?.email ?? null },
     changes: [],
   });
 
@@ -1449,6 +1455,7 @@ export async function transferEnrollmentSpotToExistingPerson(
       event_id: eventId,
       to_enrollment_id: toEnrollment.id,
       to_person_id: targetPersonId,
+      actor_email: user?.email ?? null,
     },
     changes: [],
   });
@@ -1461,6 +1468,7 @@ export async function transferEnrollmentSpotToExistingPerson(
       event_id: eventId,
       from_enrollment_id: fromEnrollmentId,
       from_person_id: fromEnrollment.person_id,
+      actor_email: user?.email ?? null,
     },
     changes: [],
   });
@@ -1470,7 +1478,7 @@ export async function transferEnrollmentSpotToExistingPerson(
       entity_id: transferRow.id,
       action: "transfer",
       changed_by: user?.id ?? null,
-      context: { event_id: eventId, from_enrollment_id: fromEnrollmentId, to_enrollment_id: toEnrollment.id },
+      context: { event_id: eventId, from_enrollment_id: fromEnrollmentId, to_enrollment_id: toEnrollment.id, actor_email: user?.email ?? null },
       changes: [],
     });
   }

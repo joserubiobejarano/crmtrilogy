@@ -19,7 +19,7 @@ function formatRelativeTime(iso: string): string {
 
 function formatActionLabel(action: string): string {
   const labels: Record<string, string> = {
-    insert: "Alta",
+    insert: "Inscrito",
     update: "Cambio",
     delete: "Baja",
     transfer: "Transferencia",
@@ -60,7 +60,8 @@ export function AuditTimeline({
           className="flex flex-col gap-0.5 rounded border border-border/60 bg-muted/30 px-3 py-2"
         >
           <span className="text-muted-foreground">
-            {entry.actor_label} · {formatRelativeTime(entry.changed_at)}
+            {entry.actor_label}
+            {entry.event_label ? ` · Evento: ${entry.event_label}` : ""} · {formatRelativeTime(entry.changed_at)}
           </span>
           <span className="font-medium">{renderEntrySummary(entry)}</span>
         </li>

@@ -155,12 +155,12 @@ export function EventCrmView({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/app/events">← Volver a eventos</Link>
+          <Link href="/app/events">← Volver a entrenamientos</Link>
         </Button>
       </div>
 
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">{eventTitle(data)}</h1>
+        <h1 className="text-xl font-semibold md:text-2xl">{eventTitle(data)}</h1>
         <p className="text-muted-foreground">
           {data.start_date && data.end_date
             ? formatDateRange(data.start_date, data.end_date)
@@ -227,12 +227,12 @@ export function EventCrmView({
         </div>
         <div className="flex flex-wrap items-center justify-start gap-6 mb-5">
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" size="lg" onClick={() => setAddModalOpen(true)}>
+            <Button type="button" size="sm" onClick={() => setAddModalOpen(true)}>
               Agregar participante
             </Button>
             <Button
               type="button"
-              size="lg"
+              size="sm"
               variant={isActive(null) ? "secondary" : "outline"}
               onClick={() => setView(null)}
             >
@@ -240,7 +240,7 @@ export function EventCrmView({
             </Button>
             <Button
               type="button"
-              size="lg"
+              size="sm"
               variant={view === "backlog" ? "secondary" : "outline"}
               onClick={() => setView("backlog")}
             >
@@ -248,7 +248,7 @@ export function EventCrmView({
             </Button>
             <Button
               type="button"
-              size="lg"
+              size="sm"
               variant={view === "confirmed" ? "secondary" : "outline"}
               onClick={() => setView("confirmed")}
             >
@@ -256,7 +256,7 @@ export function EventCrmView({
             </Button>
             <Button
               type="button"
-              size="lg"
+              size="sm"
               variant={view === "attended" ? "secondary" : "outline"}
               onClick={() => setView("attended")}
             >
@@ -264,7 +264,7 @@ export function EventCrmView({
             </Button>
             <Button
               type="button"
-              size="lg"
+              size="sm"
               variant={view === "finalized" ? "secondary" : "outline"}
               onClick={() => setView("finalized")}
             >
@@ -272,13 +272,13 @@ export function EventCrmView({
             </Button>
           </div>
         </div>
-        <div className="flex flex-wrap items-end gap-3 mt-3">
+        <div className="flex flex-nowrap overflow-x-auto min-w-0 items-end gap-3 mt-3">
           <Input
             type="search"
             placeholder="Buscar por nombre, correo o teléfono…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 min-w-[200px] flex-1 max-w-md"
+            className="h-9 min-w-0 flex-1 max-w-md"
           />
           <input type="hidden" name="coordinator" value={coordinator} />
           <input type="hidden" name="entrenadores" value={entrenadores} />

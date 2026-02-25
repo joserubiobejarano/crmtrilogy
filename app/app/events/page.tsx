@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { listCities, listProgramTypes } from "@/app/app/administration/actions";
 import { NewEventButton } from "./NewEventModal";
 import { EventsTable } from "./EventsTable";
 import { processScheduledDeletions } from "./actions";
@@ -8,21 +9,22 @@ export default async function EventsPage() {
   await processScheduledDeletions();
 
   const supabase = await createClient();
-  const { data: events = [] } = await supabase
-    .from("events")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [eventsResult, cities, programTypes] = await Promise.all([
+    supabase.from("events").select("*").order("created_at", { ascending: false }),
+    listCities(),
+    listProgramTypes(),
+  ]);
 
-  const rows = events as EventRow[];
+  const rows = (eventsResult.data ?? []) as EventRow[];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Entrenamientos</h2>
-        <NewEventButton />
+        <NewEventButton cities={cities} programTypes={programTypes} />
       </div>
 
-      <EventsTable rows={rows} />
+      <EventsTable rows={rows} cities={cities} programTypes={programTypes} />
     </div>
   );
 }

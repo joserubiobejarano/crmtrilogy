@@ -24,11 +24,13 @@ type BooleanField =
   | "attended"
   | "details_sent"
   | "confirmed"
+  | "contract_signed"
   | "health_doc_signed"
   | "cca_signed"
   | "tl_norms_signed"
   | "tl_rules_signed"
-  | "finalized";
+  | "finalized"
+  | "withdrew";
 
 const METHOD_DB_TO_UI: Record<string, string> = {
   square: "Square",
@@ -190,6 +192,9 @@ export function EventParticipantsTable({
                 Doc Salud
               </th>
               <th className="min-w-[80px] px-4 py-3 text-center align-middle font-medium">
+                Contrato
+              </th>
+              <th className="min-w-[80px] px-4 py-3 text-center align-middle font-medium">
                 CCA
               </th>
               {event.program_type === "TL" && (
@@ -209,6 +214,9 @@ export function EventParticipantsTable({
                 Asistió
               </th>
               <th className="min-w-[80px] px-4 py-3 text-center align-middle font-medium">
+                Retiró
+              </th>
+              <th className="min-w-[80px] px-4 py-3 text-center align-middle font-medium">
                 Finalizó
               </th>
               {PAYMENT_METHOD_OPTIONS.map((m) => (
@@ -217,7 +225,7 @@ export function EventParticipantsTable({
                 </th>
               ))}
               <th className="min-w-[70px] px-4 py-3 text-center align-middle font-medium">
-                Fee
+                Fee<br />Administrativo
               </th>
               <th className="min-w-[320px] px-4 py-3 text-center align-middle font-medium">
                 Observaciones
@@ -231,7 +239,7 @@ export function EventParticipantsTable({
             {              enrollments.length === 0 ? (
               <tr>
                 <td
-                  colSpan={event.program_type === "TL" ? 23 : 21}
+                  colSpan={event.program_type === "TL" ? 25 : 23}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Ningún participante coincide con esta vista.
@@ -415,6 +423,12 @@ function EventParticipantRow({
       </td>
       <td className="px-4 py-2 align-middle text-center">
         <BooleanCheckboxCell
+          value={row.contract_signed}
+          onChange={(v) => onBooleanChange(row.id, "contract_signed", v)}
+        />
+      </td>
+      <td className="px-4 py-2 align-middle text-center">
+        <BooleanCheckboxCell
           value={row.cca_signed ?? false}
           onChange={(v) => onBooleanChange(row.id, "cca_signed", v)}
         />
@@ -445,6 +459,12 @@ function EventParticipantRow({
         <BooleanCheckboxCell
           value={row.attended}
           onChange={(v) => onBooleanChange(row.id, "attended", v)}
+        />
+      </td>
+      <td className="px-4 py-2 align-middle text-center">
+        <BooleanCheckboxCell
+          value={row.withdrew}
+          onChange={(v) => onBooleanChange(row.id, "withdrew", v)}
         />
       </td>
       <td className="px-4 py-2 align-middle text-center">

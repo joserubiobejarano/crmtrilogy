@@ -5,7 +5,7 @@ export default async function HistorialPage() {
   const entries = await getAuditLogAll(100);
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-7xl space-y-6">
       <h1 className="text-2xl font-semibold">Historial</h1>
       <p className="text-muted-foreground text-sm">
         Cambios recientes en todos los eventos.

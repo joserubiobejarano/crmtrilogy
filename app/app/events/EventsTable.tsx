@@ -10,6 +10,7 @@ import type { EventRow } from "./types";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { programTypeToDisplay } from "@/lib/program-display";
+import type { CityRow, ProgramTypeRow } from "@/app/app/administration/actions";
 
 function formatDate(iso: string) {
   try {
@@ -21,10 +22,20 @@ function formatDate(iso: string) {
   }
 }
 
-const CITIES = ["Miami", "Atlanta"] as const;
-const PROGRAM_TYPES = ["PT", "LT", "TL"] as const;
+function programTypeLabel(programTypes: ProgramTypeRow[], code: string): string {
+  const pt = programTypes.find((p) => p.code === code);
+  return pt ? pt.label : programTypeToDisplay(code);
+}
 
-export function EventsTable({ rows }: { rows: EventRow[] }) {
+export function EventsTable({
+  rows,
+  cities,
+  programTypes,
+}: {
+  rows: EventRow[];
+  cities: CityRow[];
+  programTypes: ProgramTypeRow[];
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editEvent, setEditEvent] = useState<EventRow | null>(null);
@@ -87,9 +98,9 @@ export function EventsTable({ rows }: { rows: EventRow[] }) {
               )}
             >
               <option value="">Todas</option>
-              {CITIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {cities.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -114,9 +125,9 @@ export function EventsTable({ rows }: { rows: EventRow[] }) {
               )}
             >
               <option value="">Todos</option>
-              {PROGRAM_TYPES.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+              {programTypes.map((p) => (
+                <option key={p.id} value={p.code}>
+                  {p.code} — {p.label}
                 </option>
               ))}
             </select>
@@ -155,7 +166,7 @@ export function EventsTable({ rows }: { rows: EventRow[] }) {
                   className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => router.push(`/app/events/${event.id}`)}
                 >
-                  <td className="px-4 py-3">{programTypeToDisplay(event.program_type)}</td>
+                  <td className="px-4 py-3">{programTypeLabel(programTypes, event.program_type)}</td>
                   <td className="px-4 py-3">{event.code}</td>
                   <td className="px-4 py-3">{event.city}</td>
                   <td className="px-4 py-3">{event.coordinator ?? "—"}</td>
@@ -244,11 +255,15 @@ export function EventsTable({ rows }: { rows: EventRow[] }) {
         open={editEvent !== null}
         onOpenChange={(open) => !open && setEditEvent(null)}
         event={editEvent}
+        cities={cities}
+        programTypes={programTypes}
       />
       <DuplicateEventModal
         open={duplicateSource !== null}
         onOpenChange={(open) => !open && setDuplicateSource(null)}
         sourceEvent={duplicateSource}
+        cities={cities}
+        programTypes={programTypes}
       />
     </>
   );

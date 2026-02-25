@@ -5,6 +5,7 @@ import type { AuditLogRow } from "./audit";
 
 export type AuditLogEntry = AuditLogRow & {
   actor_label: string;
+  event_label: string | null;
 };
 
 export async function getAuditLogAll(limit = 100): Promise<AuditLogEntry[]> {
@@ -17,10 +18,38 @@ export async function getAuditLogAll(limit = 100): Promise<AuditLogEntry[]> {
 
   if (error) return [];
   const rows = (data ?? []) as AuditLogRow[];
-  return rows.map((row) => ({
-    ...row,
-    actor_label: row.changed_by ? "Usuario" : "Sistema",
-  }));
+  const eventIds = [
+    ...new Set(
+      rows
+        .map((r) => r.context?.event_id as string | undefined)
+        .filter((id): id is string => typeof id === "string")
+    ),
+  ];
+  let eventLabels: Record<string, string> = {};
+  if (eventIds.length > 0) {
+    const { data: events } = await supabase
+      .from("events")
+      .select("id, code, city, start_date")
+      .in("id", eventIds);
+    if (events) {
+      eventLabels = Object.fromEntries(
+        events.map((e: { id: string; code: string | null; city: string | null; start_date: string | null }) => [
+          e.id,
+          [e.code, e.city, e.start_date].filter(Boolean).join(" · ") || e.id,
+        ])
+      );
+    }
+  }
+  return rows.map((row) => {
+    const ctx = row.context ?? {};
+    const actorEmail = ctx.actor_email as string | null | undefined;
+    const eventId = ctx.event_id as string | undefined;
+    return {
+      ...row,
+      actor_label: typeof actorEmail === "string" && actorEmail ? actorEmail : row.changed_by ? "Usuario" : "Sistema",
+      event_label: eventId ? eventLabels[eventId] ?? null : null,
+    };
+  });
 }
 
 export async function getAuditLogForEvent(
@@ -40,6 +69,7 @@ export async function getAuditLogForEvent(
   return rows.map((row) => ({
     ...row,
     actor_label: row.changed_by ? "Usuario" : "Sistema",
+    event_label: null,
   }));
 }
 
@@ -62,6 +92,7 @@ export async function getAuditLogForEntity(
   return rows.map((row) => ({
     ...row,
     actor_label: row.changed_by ? "Usuario" : "Sistema",
+    event_label: null,
   }));
 }
 
@@ -102,5 +133,6 @@ export async function getAuditLogForPerson(
   return merged.slice(0, limit).map((row) => ({
     ...row,
     actor_label: row.changed_by ? "Usuario" : "Sistema",
+    event_label: null,
   }));
 }

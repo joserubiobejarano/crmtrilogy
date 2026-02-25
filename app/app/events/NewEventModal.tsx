@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createEvent, type CreateEventResult } from "./actions";
 import { cn } from "@/lib/utils";
+import type { CityRow, ProgramTypeRow } from "@/app/app/administration/actions";
 
 function createEventAction(_prev: CreateEventResult | null, formData: FormData): Promise<CreateEventResult> {
   return createEvent(formData);
@@ -22,9 +23,13 @@ function createEventAction(_prev: CreateEventResult | null, formData: FormData):
 export function NewEventModal({
   open,
   onOpenChange,
+  cities,
+  programTypes,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  cities: CityRow[];
+  programTypes: ProgramTypeRow[];
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(createEventAction, null);
@@ -35,6 +40,8 @@ export function NewEventModal({
       router.refresh();
     }
   }, [state, onOpenChange, router]);
+
+  const defaultProgram = programTypes[0]?.code ?? "PT";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,15 +55,17 @@ export function NewEventModal({
             <select
               id="program_type"
               name="program_type"
-              defaultValue="PT"
+              defaultValue={defaultProgram}
               className={cn(
                 "border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-base shadow-xs md:text-sm",
                 "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
               )}
             >
-              <option value="PT">PT — Poder Total</option>
-              <option value="LT">LT — Libertad Total</option>
-              <option value="TL">TL — TL</option>
+              {programTypes.map((pt) => (
+                <option key={pt.id} value={pt.code}>
+                  {pt.code} — {pt.label}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">
@@ -74,8 +83,11 @@ export function NewEventModal({
                 "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
               )}
             >
-              <option value="Miami">Miami</option>
-              <option value="Atlanta">Atlanta</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">
@@ -111,12 +123,18 @@ export function NewEventModal({
   );
 }
 
-export function NewEventButton() {
+export function NewEventButton({
+  cities,
+  programTypes,
+}: {
+  cities: CityRow[];
+  programTypes: ProgramTypeRow[];
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button onClick={() => setOpen(true)}>Nuevo entrenamiento</Button>
-      <NewEventModal open={open} onOpenChange={setOpen} />
+      <NewEventModal open={open} onOpenChange={setOpen} cities={cities} programTypes={programTypes} />
     </>
   );
 }

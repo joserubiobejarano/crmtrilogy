@@ -10,8 +10,6 @@ export type DuplicateEventResult =
   | { success: true; newEventId: string }
   | { success: false; error: string };
 
-const VALID_PROGRAM_TYPES = ["PT", "LT", "TL"] as const;
-
 function parseOptionalDate(value: FormDataEntryValue | null): string | null {
   if (value == null) return null;
   const s = String(value).trim();
@@ -20,14 +18,28 @@ function parseOptionalDate(value: FormDataEntryValue | null): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+/** Returns error message if city or program_type is invalid; null if valid. */
+async function validateEventCityAndProgram(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  city: string,
+  program_type: string
+): Promise<string | null> {
+  if (!city.trim()) return "La ciudad es obligatoria.";
+  if (!program_type.trim()) return "Selecciona un programa válido.";
+  const [{ data: cityRow }, { data: ptRow }] = await Promise.all([
+    supabase.from("cities").select("id").eq("name", city.trim()).maybeSingle(),
+    supabase.from("program_types").select("id").eq("code", program_type.trim().toUpperCase()).maybeSingle(),
+  ]);
+  if (!cityRow) return "La ciudad no está en el sistema. Añádela en Administración > Ciudades.";
+  if (!ptRow) return "El programa no está en el sistema. Añádelo en Administración > Entrenamientos.";
+  return null;
+}
+
 export async function createEvent(formData: FormData): Promise<CreateEventResult> {
   const program_type = String(formData.get("program_type") ?? "").trim().toUpperCase();
   const code = String(formData.get("code") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
 
-  if (!VALID_PROGRAM_TYPES.includes(program_type as (typeof VALID_PROGRAM_TYPES)[number])) {
-    return { success: false, error: "Selecciona un programa válido (PT, LT o TL)." };
-  }
   if (!code) {
     return { success: false, error: "El número es obligatorio." };
   }
@@ -35,11 +47,14 @@ export async function createEvent(formData: FormData): Promise<CreateEventResult
     return { success: false, error: "La ciudad es obligatoria." };
   }
 
+  const supabase = await createClient();
+  const validationError = await validateEventCityAndProgram(supabase, city, program_type);
+  if (validationError) return { success: false, error: validationError };
+
   const start_date = parseOptionalDate(formData.get("start_date"));
   const end_date = parseOptionalDate(formData.get("end_date"));
   const coordinator = String(formData.get("coordinator") ?? "").trim() || null;
 
-  const supabase = await createClient();
   const { error } = await supabase.from("events").insert({
     program_type,
     code,
@@ -72,9 +87,6 @@ export async function updateEvent(
   const start_date = parseOptionalDate(formData.get("start_date"));
   const end_date = parseOptionalDate(formData.get("end_date"));
 
-  if (!VALID_PROGRAM_TYPES.includes(program_type as (typeof VALID_PROGRAM_TYPES)[number])) {
-    return { success: false, error: "Selecciona un programa válido (PT, LT o TL)." };
-  }
   if (!code) {
     return { success: false, error: "El número es obligatorio." };
   }
@@ -83,6 +95,9 @@ export async function updateEvent(
   }
 
   const supabase = await createClient();
+  const validationError = await validateEventCityAndProgram(supabase, city, program_type);
+  if (validationError) return { success: false, error: validationError };
+
   const payload: {
     program_type: string;
     code: string;
@@ -158,9 +173,6 @@ export async function duplicateEvent(
   const coordinator = String(formData.get("coordinator") ?? "").trim() || null;
   const copyParticipants = formData.get("copy_participants") === "on" || formData.get("copy_participants") === "true";
 
-  if (!VALID_PROGRAM_TYPES.includes(program_type as (typeof VALID_PROGRAM_TYPES)[number])) {
-    return { success: false, error: "Selecciona un programa válido (PT, LT o TL)." };
-  }
   if (!code) {
     return { success: false, error: "El número es obligatorio." };
   }
@@ -169,6 +181,8 @@ export async function duplicateEvent(
   }
 
   const supabase = await createClient();
+  const validationError = await validateEventCityAndProgram(supabase, city, program_type);
+  if (validationError) return { success: false, error: validationError };
 
   const { data: sourceEvent, error: fetchError } = await supabase
     .from("events")
@@ -202,7 +216,7 @@ export async function duplicateEvent(
     const { data: rawSourceEnrollments } = await supabase
       .from("enrollments")
       .select(
-        "id, person_id, status, attended, details_sent, confirmed, contract_signed, cca_signed, admin_notes, angel_name, city, health_doc_signed, tl_norms_signed, tl_rules_signed, cantidad, finalized"
+        "id, person_id, status, attended, details_sent, confirmed, contract_signed, cca_signed, admin_notes, angel_name, city, health_doc_signed, tl_norms_signed, tl_rules_signed, cantidad, finalized, withdrew"
       )
       .eq("event_id", sourceEventId);
 
@@ -230,6 +244,7 @@ export async function duplicateEvent(
           tl_rules_signed: false,
           cantidad: null,
           finalized: false,
+          withdrew: false,
         })
       );
 

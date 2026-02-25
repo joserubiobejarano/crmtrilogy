@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { updateEvent, type UpdateEventResult } from "./actions";
 import type { EventRow } from "./types";
 import { cn } from "@/lib/utils";
+import type { CityRow, ProgramTypeRow } from "@/app/app/administration/actions";
 
 function editEventAction(
   _prev: UpdateEventResult | null,
@@ -40,10 +41,14 @@ export function EditEventModal({
   open,
   onOpenChange,
   event,
+  cities,
+  programTypes,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   event: EventRow | null;
+  cities: CityRow[];
+  programTypes: ProgramTypeRow[];
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(editEventAction, null);
@@ -76,9 +81,11 @@ export function EditEventModal({
                 "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
               )}
             >
-              <option value="PT">PT — Poder Total</option>
-              <option value="LT">LT — Libertad Total</option>
-              <option value="TL">TL — TL</option>
+              {programTypes.map((pt) => (
+                <option key={pt.id} value={pt.code}>
+                  {pt.code} — {pt.label}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">
@@ -103,8 +110,11 @@ export function EditEventModal({
                 "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none"
               )}
             >
-              <option value="Miami">Miami</option>
-              <option value="Atlanta">Atlanta</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">

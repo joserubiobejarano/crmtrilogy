@@ -13,6 +13,7 @@ const AUDIT_FIELD_LABELS: Record<string, string> = {
   health_doc_signed: "Doc. Salud",
   tl_norms_signed: "Normas TL",
   tl_rules_signed: "Reglas TL",
+  withdrew: "Retiró",
   status: "Estado",
   admin_notes: "Observaciones",
   angel_name: "Ángel",

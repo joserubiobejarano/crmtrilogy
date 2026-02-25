@@ -38,6 +38,7 @@ export type EnrollmentRow = {
   tl_norms_signed: boolean | null;
   tl_rules_signed: boolean | null;
   finalized: boolean;
+  withdrew: boolean;
   created_at?: string;
   person: {
     first_name: string | null;
