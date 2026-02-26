@@ -123,4 +123,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Smaller base size on viewports ≤1024px so rem-based UI scales down app-wide */
+  @media (max-width: 1024px) {
+    html {
+      font-size: 14px;
+    }
+  }
 }

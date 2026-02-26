@@ -17,7 +17,7 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="grid grid-cols-3 items-center border-b px-6 py-4">
+      <header className="grid grid-cols-3 items-center border-b px-4 py-3 md:px-6 md:py-4">
         <Link href="/app" className="ml-4 text-xl font-semibold">
           Somos Trilogy
         </Link>

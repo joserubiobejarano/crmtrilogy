@@ -223,6 +223,15 @@ export function EventCrmView({
             >
               {generateReportPending ? "Generando…" : "Generar reporte"}
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={`/form/e/${data.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Formulario
+              </a>
+            </Button>
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-start gap-6 mb-5">
@@ -272,69 +281,73 @@ export function EventCrmView({
             </Button>
           </div>
         </div>
-        <div className="flex flex-nowrap overflow-x-auto min-w-0 items-end gap-3 mt-3">
-          <Input
-            type="search"
-            placeholder="Buscar por nombre, correo o teléfono…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 min-w-0 flex-1 max-w-md"
-          />
+        <div className="flex flex-col gap-2 mt-3 md:flex-row md:flex-nowrap md:items-end md:gap-3 md:overflow-x-auto md:min-w-0">
+          <div className="w-full min-w-0 md:flex-1 md:max-w-md">
+            <Input
+              type="search"
+              placeholder="Buscar por nombre, correo o teléfono…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 min-w-0 w-full"
+            />
+          </div>
           <input type="hidden" name="coordinator" value={coordinator} />
           <input type="hidden" name="entrenadores" value={entrenadores} />
           <input type="hidden" name="capitan_mentores" value={capitanMentores} />
           <input type="hidden" name="mentores" value={mentores} />
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Label htmlFor="event-coordinator" className="text-sm text-foreground whitespace-nowrap">
-              Coordinador
-            </Label>
-            <Input
-              id="event-coordinator"
-              value={coordinator}
-              onChange={(e) => setCoordinator(e.target.value)}
-              onBlur={() => saveStaffField("coordinator", coordinator)}
-              placeholder="Nombres"
-              className="h-9 min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Label htmlFor="event-entrenadores" className="text-sm text-foreground whitespace-nowrap">
-              Entrenadores
-            </Label>
-            <Input
-              id="event-entrenadores"
-              value={entrenadores}
-              onChange={(e) => setEntrenadores(e.target.value)}
-              onBlur={() => saveStaffField("entrenadores", entrenadores)}
-              placeholder="Nombres"
-              className="h-9 min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Label htmlFor="event-capitan_mentores" className="text-sm text-foreground whitespace-nowrap">
-              Capitán mentores
-            </Label>
-            <Input
-              id="event-capitan_mentores"
-              value={capitanMentores}
-              onChange={(e) => setCapitanMentores(e.target.value)}
-              onBlur={() => saveStaffField("capitan_mentores", capitanMentores)}
-              placeholder="Nombres"
-              className="h-9 min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Label htmlFor="event-mentores" className="text-sm text-foreground whitespace-nowrap">
-              Mentores
-            </Label>
-            <Input
-              id="event-mentores"
-              value={mentores}
-              onChange={(e) => setMentores(e.target.value)}
-              onBlur={() => saveStaffField("mentores", mentores)}
-              placeholder="Nombres"
-              className="h-9 min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
-            />
+          <div className="flex overflow-x-auto gap-2 shrink-0 items-end md:gap-3">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Label htmlFor="event-coordinator" className="text-sm text-foreground whitespace-nowrap">
+                Coordinador
+              </Label>
+              <Input
+                id="event-coordinator"
+                value={coordinator}
+                onChange={(e) => setCoordinator(e.target.value)}
+                onBlur={() => saveStaffField("coordinator", coordinator)}
+                placeholder="Nombres"
+                className="h-9 min-w-[100px] md:min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Label htmlFor="event-entrenadores" className="text-sm text-foreground whitespace-nowrap">
+                Entrenadores
+              </Label>
+              <Input
+                id="event-entrenadores"
+                value={entrenadores}
+                onChange={(e) => setEntrenadores(e.target.value)}
+                onBlur={() => saveStaffField("entrenadores", entrenadores)}
+                placeholder="Nombres"
+                className="h-9 min-w-[100px] md:min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Label htmlFor="event-capitan_mentores" className="text-sm text-foreground whitespace-nowrap">
+                Capitán mentores
+              </Label>
+              <Input
+                id="event-capitan_mentores"
+                value={capitanMentores}
+                onChange={(e) => setCapitanMentores(e.target.value)}
+                onBlur={() => saveStaffField("capitan_mentores", capitanMentores)}
+                placeholder="Nombres"
+                className="h-9 min-w-[100px] md:min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Label htmlFor="event-mentores" className="text-sm text-foreground whitespace-nowrap">
+                Mentores
+              </Label>
+              <Input
+                id="event-mentores"
+                value={mentores}
+                onChange={(e) => setMentores(e.target.value)}
+                onBlur={() => saveStaffField("mentores", mentores)}
+                placeholder="Nombres"
+                className="h-9 min-w-[100px] md:min-w-[140px] text-sm !bg-transparent border-transparent dark:!bg-transparent focus-visible:!bg-transparent focus-visible:dark:!bg-transparent placeholder-shown:bg-background placeholder-shown:border placeholder-shown:border-input [&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:shadow-[inset_0_0_0_9999px_var(--background)]"
+              />
+            </div>
           </div>
         </div>
         {datesState && !datesState.success && (
