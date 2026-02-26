@@ -167,7 +167,7 @@ export async function submitParticipantForm(
       await supabase.from("payments").insert({
         enrollment_id: result.enrollmentId,
         method: methodDb,
-        fee_amount: data.cantidad ?? null,
+        amount: data.cantidad ?? null,
       });
     }
   }

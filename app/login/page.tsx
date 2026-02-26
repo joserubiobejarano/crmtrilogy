@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminEmailAsync } from "@/lib/admin";
 
 type LoginPageProps = {
   searchParams?: Promise<{ error?: string }>;
@@ -36,7 +36,7 @@ async function signIn(formData: FormData) {
     redirect("/login?error=invalid");
   }
 
-  if (!isAdminEmail(email)) {
+  if (!(await isAdminEmailAsync(supabase, email))) {
     await supabase.auth.signOut();
     redirect("/login?error=forbidden");
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -48,6 +48,17 @@ const CIUDAD_OPTIONS = ["Miami", "Atlanta"] as const;
 const STICKY_BG = "bg-background";
 const STICKY_Z = "z-10";
 
+type OptimisticField = BooleanField | "status";
+type OptimisticOverrides = Record<string, Partial<Pick<EnrollmentRow, OptimisticField>>>;
+
+function mergeOptimisticRow(
+  row: EnrollmentRow,
+  overrides: Partial<Pick<EnrollmentRow, OptimisticField>> | undefined
+): EnrollmentRow {
+  if (!overrides || Object.keys(overrides).length === 0) return row;
+  return { ...row, ...overrides };
+}
+
 export function EventParticipantsTable({
   event,
   enrollments,
@@ -57,12 +68,37 @@ export function EventParticipantsTable({
 }) {
   const router = useRouter();
   const [transferModalEnrollmentId, setTransferModalEnrollmentId] = useState<string | null>(null);
+  const [optimisticOverrides, setOptimisticOverrides] = useState<OptimisticOverrides>({});
 
   const handleBooleanChange = useCallback(
     async (enrollmentId: string, field: BooleanField, valueStr: string) => {
       const value = valueStr === "TRUE";
+      setOptimisticOverrides((prev) => ({
+        ...prev,
+        [enrollmentId]: { ...prev[enrollmentId], [field]: value },
+      }));
       const result = await updateEnrollmentField(enrollmentId, field, value);
-      if (result.success) router.refresh();
+      if (result.success) {
+        setOptimisticOverrides((prev) => {
+          const next = { ...prev };
+          delete next[enrollmentId];
+          return next;
+        });
+        router.refresh();
+      } else {
+        setOptimisticOverrides((prev) => {
+          const next = { ...prev };
+          const cur = next[enrollmentId];
+          if (cur && field in cur) {
+            const rest = { ...cur };
+            delete rest[field];
+            if (Object.keys(rest).length === 0) delete next[enrollmentId];
+            else next[enrollmentId] = rest;
+          }
+          return next;
+        });
+        alert(result.error);
+      }
     },
     [router]
   );
@@ -73,8 +109,38 @@ export function EventParticipantsTable({
       field: "admin_notes" | "angel_name" | "city" | "status",
       value: string
     ) => {
+      if (field === "status") {
+        setOptimisticOverrides((prev) => ({
+          ...prev,
+          [enrollmentId]: { ...prev[enrollmentId], status: value },
+        }));
+      }
       const result = await updateEnrollmentField(enrollmentId, field, value);
-      if (result.success) router.refresh();
+      if (result.success) {
+        if (field === "status") {
+          setOptimisticOverrides((prev) => {
+            const next = { ...prev };
+            delete next[enrollmentId];
+            return next;
+          });
+        }
+        router.refresh();
+      } else {
+        if (field === "status") {
+          setOptimisticOverrides((prev) => {
+            const next = { ...prev };
+            const cur = next[enrollmentId];
+            if (cur && "status" in cur) {
+              const rest = { ...cur };
+              delete rest.status;
+              if (Object.keys(rest).length === 0) delete next[enrollmentId];
+              else next[enrollmentId] = rest;
+            }
+            return next;
+          });
+          alert(result.error);
+        }
+      }
     },
     [router]
   );
@@ -246,22 +312,25 @@ export function EventParticipantsTable({
                 </td>
               </tr>
             ) : (
-              enrollments.map((row) => (
-                <EventParticipantRow
-                  key={row.id}
-                  row={row}
-                  event={event}
-                  eventCity={event.city}
-                  enrollments={enrollments}
-                  onBooleanChange={handleBooleanChange}
-                  onBlurField={handleBlur}
-                  onBlurPersonField={handleBlurPerson}
-                  onPaymentAmountChange={handlePaymentAmountChange}
-                  onPaymentFeeChange={handlePaymentFeeChange}
-                  onRemove={handleRemove}
-                  onTransfer={row.replaced_by_enrollment_id ? undefined : () => setTransferModalEnrollmentId(row.id)}
-                />
-              ))
+              enrollments.map((row) => {
+                const effectiveRow = mergeOptimisticRow(row, optimisticOverrides[row.id]);
+                return (
+                  <EventParticipantRow
+                    key={row.id}
+                    row={effectiveRow}
+                    event={event}
+                    eventCity={event.city}
+                    enrollments={enrollments}
+                    onBooleanChange={handleBooleanChange}
+                    onBlurField={handleBlur}
+                    onBlurPersonField={handleBlurPerson}
+                    onPaymentAmountChange={handlePaymentAmountChange}
+                    onPaymentFeeChange={handlePaymentFeeChange}
+                    onRemove={handleRemove}
+                    onTransfer={row.replaced_by_enrollment_id ? undefined : () => setTransferModalEnrollmentId(row.id)}
+                  />
+                );
+              })
             )}
           </tbody>
         </table>
@@ -759,14 +828,28 @@ function EditableCell({
 }) {
   const [local, setLocal] = useState(value);
   const [editing, setEditing] = useState(false);
+  const lastSubmittedValueRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!editing) setLocal(value);
+    if (!editing) {
+      setLocal((prev) => {
+        if (value === lastSubmittedValueRef.current) {
+          lastSubmittedValueRef.current = null;
+          return value;
+        }
+        if (lastSubmittedValueRef.current != null) return prev;
+        if (value !== prev) return value;
+        return prev;
+      });
+    }
   }, [value, editing]);
 
   const handleBlur = () => {
     setEditing(false);
-    if (local !== value) onBlur(local);
+    if (local !== value) {
+      lastSubmittedValueRef.current = local;
+      onBlur(local);
+    }
   };
 
   if (editing) {
@@ -782,16 +865,17 @@ function EditableCell({
     );
   }
 
+  const displayValue = local || (placeholder ?? "");
   return (
     <button
       type="button"
       className={cn(
         "min-w-[120px] block w-full rounded border border-transparent px-2 py-1.5 text-center text-sm hover:border-input hover:bg-muted/50",
-        !value && "text-muted-foreground"
+        !displayValue && "text-muted-foreground"
       )}
       onClick={() => setEditing(true)}
     >
-      {value || (placeholder ?? "")}
+      {displayValue}
     </button>
   );
 }
