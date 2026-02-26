@@ -70,6 +70,28 @@ export function EventParticipantsTable({
   const [transferModalEnrollmentId, setTransferModalEnrollmentId] = useState<string | null>(null);
   const [optimisticOverrides, setOptimisticOverrides] = useState<OptimisticOverrides>({});
 
+  // Clear overrides only after server data has caught up (avoids flicker: marked -> unmarked -> marked)
+  useEffect(() => {
+    setOptimisticOverrides((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const enrollmentId of Object.keys(next)) {
+        const override = next[enrollmentId];
+        if (!override) continue;
+        const serverRow = enrollments.find((r) => r.id === enrollmentId);
+        if (!serverRow) continue;
+        const allMatch = (Object.keys(override) as (keyof typeof override)[]).every(
+          (key) => serverRow[key] === override[key]
+        );
+        if (allMatch) {
+          delete next[enrollmentId];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [enrollments]);
+
   const handleBooleanChange = useCallback(
     async (enrollmentId: string, field: BooleanField, valueStr: string) => {
       const value = valueStr === "TRUE";
@@ -79,11 +101,6 @@ export function EventParticipantsTable({
       }));
       const result = await updateEnrollmentField(enrollmentId, field, value);
       if (result.success) {
-        setOptimisticOverrides((prev) => {
-          const next = { ...prev };
-          delete next[enrollmentId];
-          return next;
-        });
         router.refresh();
       } else {
         setOptimisticOverrides((prev) => {
@@ -117,13 +134,6 @@ export function EventParticipantsTable({
       }
       const result = await updateEnrollmentField(enrollmentId, field, value);
       if (result.success) {
-        if (field === "status") {
-          setOptimisticOverrides((prev) => {
-            const next = { ...prev };
-            delete next[enrollmentId];
-            return next;
-          });
-        }
         router.refresh();
       } else {
         if (field === "status") {
